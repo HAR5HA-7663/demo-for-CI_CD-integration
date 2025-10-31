@@ -20,6 +20,9 @@ wheels/
 .installed.cfg
 *.egg
 .cursorrules
+*.pem
+*.sh
+
 # Virtual environments
 venv/
 env/
