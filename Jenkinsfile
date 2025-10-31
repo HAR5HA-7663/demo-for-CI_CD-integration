@@ -6,7 +6,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'k8s-token', variable: 'TOKEN')]) {
                     sh '''
-                    cat <<EOF > kubeconfig.yaml
+                    cat <<'EOF' > kubeconfig.yaml
 apiVersion: v1
 kind: Config
 clusters:
