@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+
+    environment {
+        REGISTRY = "docker.io/<DOCKERHUB_USERNAME>"
+        IMAGE = "${REGISTRY}/notification-service:${GIT_COMMIT.take(7)}"
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'docker build -t $IMAGE .'
+            }
+        }
+        stage('Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh 'echo $PASS | docker login -u $USER --password-stdin'
+                }
+                sh 'docker push $IMAGE'
+            }
+        }
+    }
+}
+
