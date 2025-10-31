@@ -23,9 +23,9 @@ current-context: eks
 users:
 - name: jenkins
   user:
-    token: $TOKEN" > kubeconfig
+    token: $TOKEN" > kubeconfig.yaml
 
-                    export KUBECONFIG=$PWD/kubeconfig
+                    export KUBECONFIG=$PWD/kubeconfig.yaml
                     kubectl apply -f k8s/
                     kubectl get svc -n web-apps
                     '''
