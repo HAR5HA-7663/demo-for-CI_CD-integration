@@ -2,22 +2,38 @@ pipeline {
     agent any
 
     environment {
-        REGISTRY = "docker.io/<DOCKERHUB_USERNAME>"
-        IMAGE = "${REGISTRY}/user-service:${GIT_COMMIT.take(7)}"
+        AWS_REGION = 'us-east-2'
+        ECR_REPO = '898919247265.dkr.ecr.us-east-2.amazonaws.com'
+        SERVICE_NAME = 'user-service'
+        CLUSTER = 'assignment5-cluster'
     }
 
     stages {
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE .'
+                sh '''
+                docker build -t $SERVICE_NAME .
+                docker tag $SERVICE_NAME:latest $ECR_REPO/$SERVICE_NAME:latest
+                '''
             }
         }
-        stage('Push') {
+        stage('Push to ECR') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh 'echo $PASS | docker login -u $USER --password-stdin'
-                }
-                sh 'docker push $IMAGE'
+                sh '''
+                aws ecr get-login-password --region $AWS_REGION | \
+                docker login --username AWS --password-stdin $ECR_REPO
+                docker push $ECR_REPO/$SERVICE_NAME:latest
+                '''
+            }
+        }
+        stage('Deploy to EKS') {
+            steps {
+                sh '''
+                aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER
+                kubectl create ns web-apps --dry-run=client -o yaml | kubectl apply -f -
+                kubectl apply -f k8s/
+                kubectl get pods -n web-apps
+                '''
             }
         }
     }
