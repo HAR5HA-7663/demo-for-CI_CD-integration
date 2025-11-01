@@ -28,6 +28,8 @@ venv/
 env/
 ENV/
 .venv
+**/Jenkinsfile.ci
+
 
 # IDE
 .vscode/
