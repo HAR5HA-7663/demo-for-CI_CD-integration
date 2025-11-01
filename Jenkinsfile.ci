@@ -13,6 +13,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Building Docker image for $SERVICE_NAME"
+                cd enrollment-service
                 docker build -t $SERVICE_NAME .
                 docker tag $SERVICE_NAME:latest $ECR_REPO/$SERVICE_NAME:latest
                 '''
