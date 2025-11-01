@@ -16,11 +16,11 @@ spec:
         app: course-svc
     spec:
       containers:
-      - name: course-svc
-        image: 898919247265.dkr.ecr.us-east-2.amazonaws.com/course-service:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8080
+        - name: course-svc
+          image: 898919247265.dkr.ecr.us-east-2.amazonaws.com/course-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
@@ -32,6 +32,5 @@ spec:
   selector:
     app: course-svc
   ports:
-  - port: 80
-    targetPort: 8080
-
+    - port: 80
+      targetPort: 8080
