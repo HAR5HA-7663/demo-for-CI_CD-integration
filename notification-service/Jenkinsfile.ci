@@ -3,32 +3,43 @@ pipeline {
 
     environment {
         AWS_REGION = 'us-east-2'
-        ECR_REPO = '898919247265.dkr.ecr.us-east-2.amazonaws.com'
-        SERVICE_NAME = 'notification-service'
-        CLUSTER = 'assignment5-cluster'
+        ECR_REPO   = '898919247265.dkr.ecr.us-east-2.amazonaws.com'
+        CLUSTER    = 'assignment5-cluster'
+        SERVICE_NAME = "${env.BRANCH_NAME}"
     }
 
     stages {
         stage('Build Docker Image') {
             steps {
                 sh '''
+                echo "Building Docker image for $SERVICE_NAME"
                 docker build -t $SERVICE_NAME .
                 docker tag $SERVICE_NAME:latest $ECR_REPO/$SERVICE_NAME:latest
                 '''
             }
         }
+
         stage('Push to ECR') {
             steps {
                 sh '''
+                echo "Authenticating to AWS ECR..."
                 aws ecr get-login-password --region $AWS_REGION | \
                 docker login --username AWS --password-stdin $ECR_REPO
+
+                echo "Creating ECR repo if missing..."
+                aws ecr describe-repositories --repository-names $SERVICE_NAME --region $AWS_REGION || \
+                aws ecr create-repository --repository-name $SERVICE_NAME --region $AWS_REGION
+
+                echo "Pushing image to ECR..."
                 docker push $ECR_REPO/$SERVICE_NAME:latest
                 '''
             }
         }
+
         stage('Deploy to EKS') {
             steps {
                 sh '''
+                echo "Deploying to EKS cluster..."
                 aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER
                 kubectl create ns web-apps --dry-run=client -o yaml | kubectl apply -f -
                 kubectl apply -f k8s/
