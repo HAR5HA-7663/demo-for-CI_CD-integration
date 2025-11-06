@@ -14,8 +14,8 @@ pipeline {
                 sh '''
                 echo "Running unit tests for $SERVICE_NAME"
                 cd payment-service
-                pip install --no-cache-dir -r requirements.txt
-                pytest test_app.py -v --tb=short
+                python3 -m pip install --no-cache-dir -r requirements.txt --user
+                python3 -m pytest test_app.py -v --tb=short
                 '''
             }
         }
