@@ -14,14 +14,6 @@ pipeline {
                 sh '''
                 echo "Running unit tests for $SERVICE_NAME"
                 cd course-service
-                
-                # Install pip if not available
-                if ! python3 -m pip --version > /dev/null 2>&1; then
-                    echo "Installing pip3..."
-                    curl -sS https://bootstrap.pypa.io/get-pip.py | python3 - --user
-                    export PATH="$HOME/.local/bin:$PATH"
-                fi
-                
                 python3 -m pip install --no-cache-dir -r requirements.txt --user
                 export PATH="$HOME/.local/bin:$PATH"
                 python3 -m pytest test_app.py -v --tb=short
@@ -33,7 +25,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Building Docker image for $SERVICE_NAME"
-                cd user-service
+                cd course-service
                 # Setup buildx for cross-platform builds with AMD64 support
                 docker buildx use multiarch 2>/dev/null || docker buildx create --name multiarch --use --driver docker-container --platform linux/amd64,linux/arm64
                 docker buildx inspect --bootstrap
