@@ -32,7 +32,7 @@ pipeline {
                 echo ""
                 echo "=========================================="
                 echo "Active Services:"
-                aws ecs list-services --cluster $CLUSTER_NAME --region $AWS_REGION --query 'serviceArns[*]' --output text | sed 's/.*\///g'
+                aws ecs list-services --cluster $CLUSTER_NAME --region $AWS_REGION --query 'serviceArns[*]' --output text | sed 's/.*\\///g'
                 echo "=========================================="
                 '''
             }
