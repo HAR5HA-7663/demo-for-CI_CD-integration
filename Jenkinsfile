@@ -14,7 +14,16 @@ pipeline {
                 sh '''
                 echo "Running unit tests for $SERVICE_NAME"
                 cd payment-service
+                
+                # Install pip if not available
+                if ! python3 -m pip --version > /dev/null 2>&1; then
+                    echo "Installing pip3..."
+                    curl -sS https://bootstrap.pypa.io/get-pip.py | python3 - --user
+                    export PATH="$HOME/.local/bin:$PATH"
+                fi
+                
                 python3 -m pip install --no-cache-dir -r requirements.txt --user
+                export PATH="$HOME/.local/bin:$PATH"
                 python3 -m pytest test_app.py -v --tb=short
                 '''
             }
