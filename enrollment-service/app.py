@@ -47,6 +47,14 @@ async def enroll(enrollment: EnrollmentCreate):
         "message": "Enrollment created, proceed to payment"
     }
 
+@app.get("/enrollments/list")
+def list_enrollments():
+    response = enrollments_table.scan()
+    return {
+        "total": len(response['Items']),
+        "enrollments": response['Items']
+    }
+
 @app.get("/enrollments/{user_id}")
 def get_enrollments(user_id: str):
     response = enrollments_table.query(
@@ -56,14 +64,6 @@ def get_enrollments(user_id: str):
     
     return {
         "user_id": user_id,
-        "total": len(response['Items']),
-        "enrollments": response['Items']
-    }
-
-@app.get("/enrollments/list")
-def list_enrollments():
-    response = enrollments_table.scan()
-    return {
         "total": len(response['Items']),
         "enrollments": response['Items']
     }
