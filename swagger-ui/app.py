@@ -10,11 +10,11 @@ app = FastAPI(
 )
 
 SERVICES = {
-    "user-service": os.getenv("USER_SERVICE_URL", "http://user-service:8080"),
-    "course-service": os.getenv("COURSE_SERVICE_URL", "http://course-service:8080"),
-    "enrollment-service": os.getenv("ENROLLMENT_SERVICE_URL", "http://enrollment-service:8080"),
-    "payment-service": os.getenv("PAYMENT_SERVICE_URL", "http://payment-service:8080"),
-    "notification-service": os.getenv("NOTIFICATION_SERVICE_URL", "http://notification-service:8080"),
+    "user-service": "http://user-service.learning-portal.local:8080",
+    "course-service": "http://course-service.learning-portal.local:8080",
+    "enrollment-service": "http://enrollment-service.learning-portal.local:8080",
+    "payment-service": "http://payment-service.learning-portal.local:8080",
+    "notification-service": "http://notification-service.learning-portal.local:8080",
 }
 
 @app.get("/")
