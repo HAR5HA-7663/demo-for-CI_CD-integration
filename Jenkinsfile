@@ -16,7 +16,7 @@ pipeline {
                 echo "=========================================="
                 
                 cd swagger-ui
-                docker build -t swagger-ui:latest .
+                docker build --platform linux/amd64 -t swagger-ui:latest .
                 docker tag swagger-ui:latest $ECR_REPO/swagger-ui:latest
                 
                 echo "Authenticating to ECR..."
