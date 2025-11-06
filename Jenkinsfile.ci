@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'us-east-2'
-        ECR_REPO   = '898919247265.dkr.ecr.us-east-2.amazonaws.com'
-        CLUSTER    = 'assignment5-cluster'
+        AWS_REGION = 'REGION'
+        ECR_REPO = 'ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com'
         SERVICE_NAME = "${env.BRANCH_NAME}"
+        CLUSTER_NAME = 'online-learning-portal'
     }
 
     stages {
@@ -37,17 +37,53 @@ pipeline {
             }
         }
 
-        stage('Deploy to EKS') {
+        stage('Deploy to ECS') {
             steps {
                 sh '''
-                echo "Deploying to EKS cluster..."
-                aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER
-                kubectl create ns web-apps --dry-run=client -o yaml | kubectl apply -f -
-                kubectl apply -f k8s/
-                kubectl get pods -n web-apps
+                echo "Deploying $SERVICE_NAME to ECS Fargate..."
+                
+                aws ecs describe-task-definition --task-definition $SERVICE_NAME --region $AWS_REGION --query 'taskDefinition' | \
+                jq '.containerDefinitions[0].image = "'$ECR_REPO'/'$SERVICE_NAME':latest" | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > task-def.json 2>/dev/null || \
+                cat > task-def.json << EOF
+{
+  "family": "$SERVICE_NAME",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "$SERVICE_NAME",
+      "image": "$ECR_REPO/$SERVICE_NAME:latest",
+      "portMappings": [{"containerPort": 8080, "protocol": "tcp"}],
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/$SERVICE_NAME",
+          "awslogs-region": "$AWS_REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
+EOF
+                
+                aws ecs register-task-definition --cli-input-json file://task-def.json --region $AWS_REGION
+                
+                SERVICE_EXISTS=$(aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --region $AWS_REGION --query 'services[0].status' --output text 2>/dev/null || echo "MISSING")
+                
+                if [ "$SERVICE_EXISTS" != "MISSING" ] && [ "$SERVICE_EXISTS" != "None" ]; then
+                    echo "Updating ECS service with new task definition..."
+                    aws ecs update-service --cluster $CLUSTER_NAME --service $SERVICE_NAME --force-new-deployment --region $AWS_REGION
+                    echo "Deployment triggered successfully!"
+                else
+                    echo "WARNING: Service $SERVICE_NAME does not exist in cluster $CLUSTER_NAME"
+                    echo "Please create the service manually in AWS ECS console first"
+                fi
                 '''
             }
         }
     }
 }
-
