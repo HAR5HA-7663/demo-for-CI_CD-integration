@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 import httpx
 import os
@@ -60,6 +60,34 @@ async def get_courses():
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(f"{SERVICES['course-service']}/")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
+
+@app.get("/courses/list")
+async def list_courses():
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{SERVICES['course-service']}/courses")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
+
+@app.post("/courses/upload")
+async def upload_course_file(
+    file: UploadFile = File(...),
+    username: str = Form(...)
+):
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            file_content = await file.read()
+            files = {"file": (file.filename, file_content, file.content_type)}
+            data = {"username": username}
+            response = await client.post(
+                f"{SERVICES['course-service']}/courses/upload",
+                files=files,
+                data=data
+            )
             return response.json()
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
