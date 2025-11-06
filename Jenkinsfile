@@ -16,8 +16,8 @@ pipeline {
                 echo "=========================================="
                 
                 cd swagger-ui
-                # Setup buildx for cross-platform builds
-                docker buildx create --name multiarch --use --driver docker-container || docker buildx use multiarch
+                # Setup buildx for cross-platform builds with AMD64 support
+                docker buildx use multiarch 2>/dev/null || docker buildx create --name multiarch --use --driver docker-container --platform linux/amd64,linux/arm64
                 docker buildx inspect --bootstrap
                 # Build for linux/amd64 and load locally
                 docker buildx build --platform linux/amd64 --load -t swagger-ui:latest .
