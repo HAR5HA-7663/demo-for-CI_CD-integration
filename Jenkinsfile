@@ -16,8 +16,11 @@ pipeline {
                 echo "=========================================="
                 
                 cd swagger-ui
-                # Force rebuild without cache to avoid architecture mismatch
-                docker build --no-cache --platform linux/amd64 -t swagger-ui:latest .
+                # Setup buildx for cross-platform builds
+                docker buildx create --name multiarch --use --driver docker-container || docker buildx use multiarch
+                docker buildx inspect --bootstrap
+                # Build for linux/amd64 and load locally
+                docker buildx build --platform linux/amd64 --load -t swagger-ui:latest .
                 docker tag swagger-ui:latest $ECR_REPO/swagger-ui:latest
                 
                 echo "Authenticating to ECR..."
