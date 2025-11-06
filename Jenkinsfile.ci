@@ -14,9 +14,8 @@ pipeline {
                 sh '''
                 echo "Building Docker image for $SERVICE_NAME"
                 cd course-service
-                # Pull correct platform base image first
-                docker pull --platform linux/amd64 python:3.10-slim
-                docker build --platform linux/amd64 --pull -t $SERVICE_NAME .
+                # Force rebuild without cache to avoid architecture mismatch
+                docker build --no-cache --platform linux/amd64 -t $SERVICE_NAME .
                 docker tag $SERVICE_NAME:latest $ECR_REPO/$SERVICE_NAME:latest
                 '''
             }
