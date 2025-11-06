@@ -14,8 +14,7 @@ pipeline {
                 sh '''
                 echo "Running unit tests for $SERVICE_NAME"
                 cd user-service
-                python3 -m pip install --no-cache-dir -r requirements.txt --user
-                export PATH="$HOME/.local/bin:$PATH"
+                python3 -m pip install --no-cache-dir -r requirements.txt --break-system-packages
                 python3 -m pytest test_app.py -v --tb=short
                 '''
             }
