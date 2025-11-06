@@ -9,6 +9,17 @@ pipeline {
     }
 
     stages {
+        stage('Run Tests') {
+            steps {
+                sh '''
+                echo "Running unit tests for $SERVICE_NAME"
+                cd enrollment-service
+                pip install --no-cache-dir -r requirements.txt
+                pytest test_app.py -v --tb=short
+                '''
+            }
+        }
+        
         stage('Build Docker Image') {
             steps {
                 sh '''
