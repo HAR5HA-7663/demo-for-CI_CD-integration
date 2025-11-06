@@ -14,8 +14,7 @@ pipeline {
                 sh '''
                 echo "Running unit tests for $SERVICE_NAME"
                 cd enrollment-service
-                python3 -m pip install --no-cache-dir -r requirements.txt --user
-                export PATH="$HOME/.local/bin:$PATH"
+                python3 -m pip install --no-cache-dir -r requirements.txt --break-system-packages
                 python3 -m pytest test_app.py -v --tb=short
                 '''
             }
@@ -85,6 +84,7 @@ EOF
                 
                 aws ecs register-task-definition --cli-input-json file://task-def.json --region $AWS_REGION
                 
+                # Update service if exists
                 SERVICE_EXISTS=$(aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --region $AWS_REGION --query 'services[0].status' --output text 2>/dev/null || echo "MISSING")
                 
                 if [ "$SERVICE_EXISTS" != "MISSING" ] && [ "$SERVICE_EXISTS" != "None" ]; then
