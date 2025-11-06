@@ -7,7 +7,7 @@
   "containerDefinitions": [
     {
       "name": "enrollment-service",
-      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/enrollment-service:latest",
+      "image": "037931886697.dkr.ecr.us-east-2.amazonaws.com/enrollment-service:latest",
       "portMappings": [
         {
           "containerPort": 8080,
@@ -19,7 +19,7 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/enrollment-service",
-          "awslogs-region": "REGION",
+          "awslogs-region": "us-east-2",
           "awslogs-stream-prefix": "ecs"
         }
       }

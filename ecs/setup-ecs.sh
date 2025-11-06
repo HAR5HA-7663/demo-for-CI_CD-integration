@@ -5,9 +5,9 @@
 
 set -e
 
-AWS_REGION="REGION"
+AWS_REGION="us-east-2"
 CLUSTER_NAME="online-learning-portal"
-ACCOUNT_ID="ACCOUNT_ID"
+ACCOUNT_ID="037931886697"
 
 echo "Creating ECS Cluster: $CLUSTER_NAME"
 aws ecs create-cluster --cluster-name $CLUSTER_NAME --region $AWS_REGION

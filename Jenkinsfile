@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'REGION'
+        AWS_REGION = 'us-east-2'
         CLUSTER_NAME = 'online-learning-portal'
     }
 

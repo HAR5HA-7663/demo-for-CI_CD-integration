@@ -7,7 +7,7 @@
   "containerDefinitions": [
     {
       "name": "payment-service",
-      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/payment-service:latest",
+      "image": "037931886697.dkr.ecr.us-east-2.amazonaws.com/payment-service:latest",
       "portMappings": [
         {
           "containerPort": 8080,
@@ -19,7 +19,7 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/payment-service",
-          "awslogs-region": "REGION",
+          "awslogs-region": "us-east-2",
           "awslogs-stream-prefix": "ecs"
         }
       }

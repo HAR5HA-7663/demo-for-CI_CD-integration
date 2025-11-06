@@ -7,7 +7,7 @@
   "containerDefinitions": [
     {
       "name": "notification-service",
-      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/notification-service:latest",
+      "image": "037931886697.dkr.ecr.us-east-2.amazonaws.com/notification-service:latest",
       "portMappings": [
         {
           "containerPort": 8080,
@@ -19,7 +19,7 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/notification-service",
-          "awslogs-region": "REGION",
+          "awslogs-region": "us-east-2",
           "awslogs-stream-prefix": "ecs"
         }
       }
