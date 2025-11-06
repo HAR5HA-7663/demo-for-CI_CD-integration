@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'REGION'
-        ECR_REPO = 'ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com'
+        AWS_REGION = 'us-east-2'
+        ECR_REPO = '037931886697.dkr.ecr.us-east-2.amazonaws.com'
         SERVICE_NAME = "${env.BRANCH_NAME}"
         CLUSTER_NAME = 'online-learning-portal'
     }
