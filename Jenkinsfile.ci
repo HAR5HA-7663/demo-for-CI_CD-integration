@@ -27,10 +27,6 @@ pipeline {
                 aws ecr get-login-password --region $AWS_REGION | \
                 docker login --username AWS --password-stdin $ECR_REPO
 
-                echo "Creating ECR repo if missing..."
-                aws ecr describe-repositories --repository-names $SERVICE_NAME --region $AWS_REGION || \
-                aws ecr create-repository --repository-name $SERVICE_NAME --region $AWS_REGION
-
                 echo "Pushing image to ECR..."
                 docker push $ECR_REPO/$SERVICE_NAME:latest
                 '''
@@ -52,6 +48,7 @@ pipeline {
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
   "memory": "512",
+  "executionRoleArn": "arn:aws:iam::037931886697:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
       "name": "$SERVICE_NAME",
