@@ -42,9 +42,7 @@ pipeline {
                 sh '''
                 echo "Deploying $SERVICE_NAME to ECS Fargate..."
                 
-                # Register new task definition with updated image
-                aws ecs describe-task-definition --task-definition $SERVICE_NAME --region $AWS_REGION --query 'taskDefinition' | \
-                jq '.containerDefinitions[0].image = "'$ECR_REPO'/'$SERVICE_NAME':latest" | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > task-def.json 2>/dev/null || \
+                # Create task definition with correct roles and latest image
                 cat > task-def.json << EOF
 {
   "family": "$SERVICE_NAME",
