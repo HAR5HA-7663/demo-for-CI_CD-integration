@@ -14,8 +14,11 @@ pipeline {
                 sh '''
                 echo "Building Docker image for $SERVICE_NAME"
                 cd course-service
-                # Force rebuild without cache to avoid architecture mismatch
-                docker build --no-cache --platform linux/amd64 -t $SERVICE_NAME .
+                # Setup buildx for cross-platform builds
+                docker buildx create --name multiarch --use --driver docker-container || docker buildx use multiarch
+                docker buildx inspect --bootstrap
+                # Build for linux/amd64 and load locally
+                docker buildx build --platform linux/amd64 --load -t $SERVICE_NAME .
                 docker tag $SERVICE_NAME:latest $ECR_REPO/$SERVICE_NAME:latest
                 '''
             }
