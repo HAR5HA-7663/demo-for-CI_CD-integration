@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 import httpx
-import os
 
 app = FastAPI(
     title="Online Learning Portal - API Gateway",
@@ -16,6 +16,37 @@ SERVICES = {
     "payment-service": "http://payment-service.learning-portal.local:8080",
     "notification-service": "http://notification-service.learning-portal.local:8080",
 }
+
+class UserRegister(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: str = "student"
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class CourseCreate(BaseModel):
+    title: str
+    price: float
+    instructor: str
+    description: str = ""
+
+class EnrollmentCreate(BaseModel):
+    user_id: str
+    course_id: str
+
+class PaymentInitiate(BaseModel):
+    enrollment_id: str
+    amount: float
+    method: str = "card"
+    user_email: str = ""
+
+class EmailNotification(BaseModel):
+    user_email: str
+    subject: str
+    body: str
 
 @app.get("/")
 def index():
@@ -46,20 +77,51 @@ async def check_all_services():
                 results[service_name] = {"status": "unreachable", "error": str(e)}
     return results
 
-@app.get("/users")
-async def get_users():
+@app.post("/users/register")
+async def register_user(user: UserRegister):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{SERVICES['user-service']}/")
+            response = await client.post(
+                f"{SERVICES['user-service']}/users/register",
+                json=user.dict()
+            )
             return response.json()
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"user-service unreachable: {str(e)}")
 
-@app.get("/courses")
-async def get_courses():
+@app.post("/users/login")
+async def login_user(credentials: UserLogin):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{SERVICES['course-service']}/")
+            response = await client.post(
+                f"{SERVICES['user-service']}/users/login",
+                json=credentials.dict()
+            )
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.json())
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=e.response.status_code, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"user-service unreachable: {str(e)}")
+
+@app.get("/users/list")
+async def list_users():
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{SERVICES['user-service']}/users/list")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"user-service unreachable: {str(e)}")
+
+@app.post("/courses/create")
+async def create_course(course: CourseCreate):
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{SERVICES['course-service']}/courses/create",
+                json=course.dict()
+            )
             return response.json()
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
@@ -68,54 +130,113 @@ async def get_courses():
 async def list_courses():
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{SERVICES['course-service']}/courses")
+            response = await client.get(f"{SERVICES['course-service']}/courses/list")
             return response.json()
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
 
-@app.post("/courses/upload")
-async def upload_course_file(
-    file: UploadFile = File(...),
-    username: str = Form(...)
-):
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        try:
-            file_content = await file.read()
-            files = {"file": (file.filename, file_content, file.content_type)}
-            data = {"username": username}
-            response = await client.post(
-                f"{SERVICES['course-service']}/courses/upload",
-                files=files,
-                data=data
-            )
-            return response.json()
-        except Exception as e:
-            raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
-
-@app.get("/enrollments")
-async def get_enrollments():
+@app.get("/courses/{course_id}")
+async def get_course(course_id: str):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{SERVICES['enrollment-service']}/")
+            response = await client.get(f"{SERVICES['course-service']}/courses/{course_id}")
+            if response.status_code == 404:
+                raise HTTPException(status_code=404, detail="Course not found")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
+
+@app.post("/enrollments/enroll")
+async def enroll_user(enrollment: EnrollmentCreate):
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{SERVICES['enrollment-service']}/enrollments/enroll",
+                json=enrollment.dict()
+            )
             return response.json()
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"enrollment-service unreachable: {str(e)}")
 
-@app.get("/payments")
-async def get_payments():
+@app.get("/enrollments/{user_id}")
+async def get_enrollments(user_id: str):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{SERVICES['payment-service']}/")
+            response = await client.get(f"{SERVICES['enrollment-service']}/enrollments/{user_id}")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"enrollment-service unreachable: {str(e)}")
+
+@app.get("/enrollments/list")
+async def list_enrollments():
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{SERVICES['enrollment-service']}/enrollments/list")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"enrollment-service unreachable: {str(e)}")
+
+@app.post("/payments/initiate")
+async def initiate_payment(payment: PaymentInitiate):
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{SERVICES['payment-service']}/payments/initiate",
+                json=payment.dict()
+            )
             return response.json()
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"payment-service unreachable: {str(e)}")
 
-@app.get("/notifications")
-async def get_notifications():
+@app.get("/payments/status/{payment_id}")
+async def get_payment_status(payment_id: str):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{SERVICES['notification-service']}/")
+            response = await client.get(f"{SERVICES['payment-service']}/payments/status/{payment_id}")
+            if response.status_code == 404:
+                raise HTTPException(status_code=404, detail="Payment not found")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"payment-service unreachable: {str(e)}")
+
+@app.get("/payments/list")
+async def list_payments():
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{SERVICES['payment-service']}/payments/list")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"payment-service unreachable: {str(e)}")
+
+@app.post("/notify/email")
+async def send_email_notification(notification: EmailNotification):
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{SERVICES['notification-service']}/notify/email",
+                json=notification.dict()
+            )
             return response.json()
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"notification-service unreachable: {str(e)}")
 
+@app.post("/notify/success")
+async def send_success_notification(data: dict):
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{SERVICES['notification-service']}/notify/success",
+                json=data
+            )
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"notification-service unreachable: {str(e)}")
+
+@app.get("/notifications/list")
+async def list_notifications():
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{SERVICES['notification-service']}/notifications/list")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"notification-service unreachable: {str(e)}")
