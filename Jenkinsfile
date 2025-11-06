@@ -3,10 +3,33 @@ pipeline {
 
     environment {
         AWS_REGION = 'us-east-2'
+        ECR_REPO = '037931886697.dkr.ecr.us-east-2.amazonaws.com'
         CLUSTER_NAME = 'online-learning-portal'
     }
 
     stages {
+        stage('Build and Push Swagger UI') {
+            steps {
+                sh '''
+                echo "=========================================="
+                echo "Building Swagger UI Docker Image"
+                echo "=========================================="
+                
+                cd swagger-ui
+                docker build -t swagger-ui:latest .
+                docker tag swagger-ui:latest $ECR_REPO/swagger-ui:latest
+                
+                echo "Authenticating to ECR..."
+                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
+                
+                echo "Pushing swagger-ui image to ECR..."
+                docker push $ECR_REPO/swagger-ui:latest
+                
+                echo "SUCCESS: Swagger UI image pushed to ECR"
+                '''
+            }
+        }
+        
         stage('Force Redeploy All ECS Services') {
             steps {
                 sh '''
