@@ -14,7 +14,7 @@ pipeline {
                 sh '''
                 echo "Building Docker image for $SERVICE_NAME"
                 cd payment-service
-                docker build -t $SERVICE_NAME .
+                docker build --platform linux/amd64 -t $SERVICE_NAME .
                 docker tag $SERVICE_NAME:latest $ECR_REPO/$SERVICE_NAME:latest
                 '''
             }
