@@ -48,7 +48,7 @@ class EmailNotification(BaseModel):
     subject: str
     body: str
 
-@app.get("/")
+@app.get("/", tags=["Gateway"])
 def index():
     return {
         "gateway": "Online Learning Portal",
@@ -58,11 +58,11 @@ def index():
         "message": "API Gateway running - visit /docs for unified API documentation"
     }
 
-@app.get("/health")
+@app.get("/health", tags=["Gateway"])
 def health():
     return {"status": "healthy", "service": "api-gateway"}
 
-@app.get("/services/health")
+@app.get("/services/health", tags=["Gateway"])
 async def check_all_services():
     results = {}
     async with httpx.AsyncClient(timeout=5.0) as client:
@@ -77,7 +77,7 @@ async def check_all_services():
                 results[service_name] = {"status": "unreachable", "error": str(e)}
     return results
 
-@app.post("/users/register")
+@app.post("/users/register", tags=["User Service"])
 async def register_user(user: UserRegister):
     async with httpx.AsyncClient() as client:
         try:
@@ -89,7 +89,7 @@ async def register_user(user: UserRegister):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"user-service unreachable: {str(e)}")
 
-@app.post("/users/login")
+@app.post("/users/login", tags=["User Service"])
 async def login_user(credentials: UserLogin):
     async with httpx.AsyncClient() as client:
         try:
@@ -105,7 +105,7 @@ async def login_user(credentials: UserLogin):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"user-service unreachable: {str(e)}")
 
-@app.get("/users/list")
+@app.get("/users/list", tags=["User Service"])
 async def list_users():
     async with httpx.AsyncClient() as client:
         try:
@@ -114,7 +114,7 @@ async def list_users():
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"user-service unreachable: {str(e)}")
 
-@app.post("/courses/create")
+@app.post("/courses/create", tags=["Course Service"])
 async def create_course(course: CourseCreate):
     async with httpx.AsyncClient() as client:
         try:
@@ -126,7 +126,7 @@ async def create_course(course: CourseCreate):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
 
-@app.get("/courses/list")
+@app.get("/courses/list", tags=["Course Service"])
 async def list_courses():
     async with httpx.AsyncClient() as client:
         try:
@@ -135,7 +135,7 @@ async def list_courses():
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
 
-@app.get("/courses/{course_id}")
+@app.get("/courses/{course_id}", tags=["Course Service"])
 async def get_course(course_id: str):
     async with httpx.AsyncClient() as client:
         try:
@@ -146,7 +146,7 @@ async def get_course(course_id: str):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
 
-@app.post("/enrollments/enroll")
+@app.post("/enrollments/enroll", tags=["Enrollment Service"])
 async def enroll_user(enrollment: EnrollmentCreate):
     async with httpx.AsyncClient() as client:
         try:
@@ -158,7 +158,7 @@ async def enroll_user(enrollment: EnrollmentCreate):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"enrollment-service unreachable: {str(e)}")
 
-@app.get("/enrollments/{user_id}")
+@app.get("/enrollments/{user_id}", tags=["Enrollment Service"])
 async def get_enrollments(user_id: str):
     async with httpx.AsyncClient() as client:
         try:
@@ -167,7 +167,7 @@ async def get_enrollments(user_id: str):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"enrollment-service unreachable: {str(e)}")
 
-@app.get("/enrollments/list")
+@app.get("/enrollments/list", tags=["Enrollment Service"])
 async def list_enrollments():
     async with httpx.AsyncClient() as client:
         try:
@@ -176,7 +176,7 @@ async def list_enrollments():
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"enrollment-service unreachable: {str(e)}")
 
-@app.post("/payments/initiate")
+@app.post("/payments/initiate", tags=["Payment Service"])
 async def initiate_payment(payment: PaymentInitiate):
     async with httpx.AsyncClient() as client:
         try:
@@ -188,7 +188,7 @@ async def initiate_payment(payment: PaymentInitiate):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"payment-service unreachable: {str(e)}")
 
-@app.get("/payments/status/{payment_id}")
+@app.get("/payments/status/{payment_id}", tags=["Payment Service"])
 async def get_payment_status(payment_id: str):
     async with httpx.AsyncClient() as client:
         try:
@@ -199,7 +199,7 @@ async def get_payment_status(payment_id: str):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"payment-service unreachable: {str(e)}")
 
-@app.get("/payments/list")
+@app.get("/payments/list", tags=["Payment Service"])
 async def list_payments():
     async with httpx.AsyncClient() as client:
         try:
@@ -208,7 +208,7 @@ async def list_payments():
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"payment-service unreachable: {str(e)}")
 
-@app.post("/notify/email")
+@app.post("/notify/email", tags=["Notification Service"])
 async def send_email_notification(notification: EmailNotification):
     async with httpx.AsyncClient() as client:
         try:
@@ -220,7 +220,7 @@ async def send_email_notification(notification: EmailNotification):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"notification-service unreachable: {str(e)}")
 
-@app.post("/notify/success")
+@app.post("/notify/success", tags=["Notification Service"])
 async def send_success_notification(data: dict):
     async with httpx.AsyncClient() as client:
         try:
@@ -232,7 +232,7 @@ async def send_success_notification(data: dict):
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"notification-service unreachable: {str(e)}")
 
-@app.get("/notifications/list")
+@app.get("/notifications/list", tags=["Notification Service"])
 async def list_notifications():
     async with httpx.AsyncClient() as client:
         try:
