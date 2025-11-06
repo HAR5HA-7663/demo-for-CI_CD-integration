@@ -2,10 +2,13 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import hashlib
 import secrets
+import boto3
+from boto3.dynamodb.conditions import Key
 
 app = FastAPI(title="User Service", version="1.0.0")
 
-users = {}
+dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
+users_table = dynamodb.Table('learning-portal-users')
 tokens = {}
 
 class UserRegister(BaseModel):
@@ -34,17 +37,23 @@ def health():
 
 @app.post("/users/register")
 def register(user: UserRegister):
-    if user.email in [u["email"] for u in users.values()]:
+    response = users_table.query(
+        IndexName='EmailIndex',
+        KeyConditionExpression=Key('email').eq(user.email)
+    )
+    if response['Items']:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    user_id = f"u{len(users) + 1}"
-    users[user_id] = {
-        "user_id": user_id,
-        "name": user.name,
-        "email": user.email,
-        "password": hash_password(user.password),
-        "role": user.role
-    }
+    user_id = f"u{secrets.token_hex(8)}"
+    users_table.put_item(
+        Item={
+            "user_id": user_id,
+            "name": user.name,
+            "email": user.email,
+            "password": hash_password(user.password),
+            "role": user.role
+        }
+    )
     
     return {
         "user_id": user_id,
@@ -56,14 +65,15 @@ def register(user: UserRegister):
 
 @app.post("/users/login")
 def login(credentials: UserLogin):
-    user = None
-    for u in users.values():
-        if u["email"] == credentials.email:
-            user = u
-            break
+    response = users_table.query(
+        IndexName='EmailIndex',
+        KeyConditionExpression=Key('email').eq(credentials.email)
+    )
     
-    if not user:
+    if not response['Items']:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    user = response['Items'][0]
     
     if user["password"] != hash_password(credentials.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -80,16 +90,19 @@ def login(credentials: UserLogin):
 
 @app.get("/users/list")
 def list_users():
+    response = users_table.scan()
+    users_list = [
+        {
+            "user_id": u["user_id"],
+            "name": u["name"],
+            "email": u["email"],
+            "role": u["role"]
+        }
+        for u in response['Items']
+    ]
+    
     return {
-        "total": len(users),
-        "users": [
-            {
-                "user_id": u["user_id"],
-                "name": u["name"],
-                "email": u["email"],
-                "role": u["role"]
-            }
-            for u in users.values()
-        ]
+        "total": len(users_list),
+        "users": users_list
     }
 

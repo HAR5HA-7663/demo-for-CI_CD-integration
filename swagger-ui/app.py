@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import httpx
@@ -140,6 +140,23 @@ async def get_course(course_id: str):
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(f"{SERVICES['course-service']}/courses/{course_id}")
+            if response.status_code == 404:
+                raise HTTPException(status_code=404, detail="Course not found")
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"course-service unreachable: {str(e)}")
+
+@app.post("/courses/upload", tags=["Course Service"])
+async def upload_course_material(course_id: str, file: UploadFile = File(...)):
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            file_content = await file.read()
+            files = {"file": (file.filename, file_content, file.content_type)}
+            response = await client.post(
+                f"{SERVICES['course-service']}/courses/upload",
+                params={"course_id": course_id},
+                files=files
+            )
             if response.status_code == 404:
                 raise HTTPException(status_code=404, detail="Course not found")
             return response.json()
