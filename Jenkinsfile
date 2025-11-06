@@ -16,7 +16,9 @@ pipeline {
                 echo "=========================================="
                 
                 cd swagger-ui
-                docker build --platform linux/amd64 -t swagger-ui:latest .
+                # Pull correct platform base image first
+                docker pull --platform linux/amd64 python:3.10-slim
+                docker build --platform linux/amd64 --pull -t swagger-ui:latest .
                 docker tag swagger-ui:latest $ECR_REPO/swagger-ui:latest
                 
                 echo "Authenticating to ECR..."
