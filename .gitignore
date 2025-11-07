@@ -33,7 +33,6 @@ ENV/
 
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -66,4 +65,3 @@ logs/
 # OS
 Thumbs.db
 desktop.ini
-
